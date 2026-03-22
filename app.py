@@ -2,52 +2,48 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
-# 1. PAGE SETTINGS
-st.set_page_config(page_title="Multibagger AI", layout="wide")
-st.title("🚀 Multibagger AI: Live Dashboard")
+# 1. SETUP PAGE
+st.set_page_config(page_title="Stock-AI Dashboard", layout="wide")
+st.title("🚀 Real-Time Stock AI Dashboard")
 
-# 2. SEARCH BAR (The New Brain)
+# 2. SIDEBAR SEARCH
 st.sidebar.header("Stock Explorer")
-search_symbol = st.sidebar.text_input("🔍 Search Symbol (e.g. NVDA, BTC-USD):", "").upper()
+search_symbol = st.sidebar.text_input("🔍 Search Symbol (e.g. NVDA, AAPL, BTC-USD):", "").upper()
 
 if search_symbol:
     try:
         ticker = yf.Ticker(search_symbol)
-        # Fetch the very last closing price
         data = ticker.history(period="1d")
         if not data.empty:
             price = data['Close'].iloc[-1]
-            st.metric(label=f"Current Price of {search_symbol}", value=f"${round(price, 2)}")
-            
-            # Show a small trend chart
+            st.metric(label=f"Current Price: {search_symbol}", value=f"${round(price, 2)}")
+            # Display a small chart
             hist = ticker.history(period="7d")
             st.line_chart(hist['Close'])
         else:
-            st.sidebar.error("No data found for this symbol.")
+            st.sidebar.error("No data found.")
     except Exception as e:
-        st.sidebar.error(f"Error: {e}")
+        st.sidebar.error("Error fetching data.")
 
 st.markdown("---")
 
-# 3. TOP LEADERS SECTION
-st.subheader("🔥 Market Leaders (Real-Time)")
+# 3. TOP MARKET LEADERS (Direct from Yahoo Finance)
+st.subheader("🔥 Top 5 Market Leaders (Real-Time)")
 tickers = ["AAPL", "NVDA", "TSLA", "MSFT", "AMZN"]
 
-@st.cache_data(ttl=60) # Refreshes every minute
-def get_market_data():
-    # This downloads all 5 stocks at once
+@st.cache_data(ttl=60)
+def get_live_prices():
+    # This replaces the 'Uvicorn Engine' by getting data directly
     data = yf.download(tickers, period="1d", interval="1m", group_by='ticker')
-    results = {}
-    for t in tickers:
-        results[t] = round(data[t]['Close'].iloc[-1], 2)
-    return results
+    prices = {t: round(data[t]['Close'].iloc[-1], 2) for t in tickers}
+    return prices
 
 try:
-    prices = get_market_data()
+    current_prices = get_live_prices()
     cols = st.columns(5)
     for i, ticker in enumerate(tickers):
-        cols[i].metric(label=ticker, value=f"${prices[ticker]}")
+        cols[i].metric(label=ticker, value=f"${current_prices[ticker]}")
 except Exception as e:
-    st.error("Market data is waking up... try refreshing in a moment.")
+    st.warning("Market is loading... click refresh if blank.")
 
 st.info("💡 Note: This app is now running 'Serverless' directly on Streamlit Cloud!")
