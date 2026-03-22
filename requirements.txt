@@ -1,7 +1,7 @@
+streamlit>=1.35.0
+altair<5
+yfinance
+pandas
 fastapi
 uvicorn
 requests
-openai
-yfinance
-pandas
-streamlit
